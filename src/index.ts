@@ -6,18 +6,21 @@ export interface Todo {
     done: boolean;
   }
 
-  const app = document.getElementById('app')!;
-  
-  let todos: Todo[] = [];
-  let idCounter = 0;
-  
-  function render() {
-    app.innerHTML = `
+class TodoApp {
+  private todos: Todo[] = [];
+  private idCounter = 0;
+
+  constructor(private app: HTMLElement) {
+    this.render();
+  }
+
+  private render() {
+    this.app.innerHTML = `
       <h1>ToDo List</h1>
-      <input id="todo-input" placeholder="할 일을 입력하세요" />
+      <input id="todo-input" />
       <button id="add-btn">추가</button>
-      <ul id="todo-list">
-        ${todos.map(todo => `
+      <ul>
+        ${this.todos.map(todo => `
           <li data-id="${todo.id}" class="${todo.done ? 'done' : ''}">
             ${todo.text}
             <button class="toggle-btn">✓</button>
@@ -26,41 +29,48 @@ export interface Todo {
         `).join('')}
       </ul>
     `;
-  
-    document.getElementById('add-btn')?.addEventListener('click', addTodo);
+
+    this.bindEvents();
+  }
+
+  private bindEvents() {
+    document.getElementById('add-btn')?.addEventListener('click', () => this.addTodo());
     document.querySelectorAll('.toggle-btn').forEach(btn =>
-      btn.addEventListener('click', toggleTodo)
+      btn.addEventListener('click', (e) => this.toggleTodo(e))
     );
     document.querySelectorAll('.delete-btn').forEach(btn =>
-      btn.addEventListener('click', deleteTodo)
+      btn.addEventListener('click', (e) => this.deleteTodo(e))
     );
   }
-  
-  function addTodo() {
+
+  private addTodo() {
     const input = document.getElementById('todo-input') as HTMLInputElement;
     const text = input.value.trim();
-    if (text === '') return;
-  
-    todos.push({ id: idCounter++, text, done: false });
+    if (!text) return;
+    this.todos.push({ id: this.idCounter++, text, done: false });
     input.value = '';
-    render();
+    this.render();
   }
-  
-  function toggleTodo(e: Event) {
+
+  private toggleTodo(e: Event) {
     const li = (e.target as HTMLElement).closest('li')!;
-    const id = Number(li.getAttribute('data-id'));
-    const todo = todos.find(t => t.id === id);
+    const id = Number(li.dataset.id);
+    const todo = this.todos.find(t => t.id === id);
     if (todo) {
       todo.done = !todo.done;
-      render();
+      this.render();
     }
   }
-  
-  function deleteTodo(e: Event) {
+
+  private deleteTodo(e: Event) {
     const li = (e.target as HTMLElement).closest('li')!;
-    const id = Number(li.getAttribute('data-id'));
-    todos = todos.filter(t => t.id !== id);
-    render();
+    const id = Number(li.dataset.id);
+    this.todos = this.todos.filter(t => t.id !== id);
+    this.render();
   }
-  
-  render();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const app = document.getElementById('app');
+  if (app) new TodoApp(app);
+});
